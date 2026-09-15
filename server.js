@@ -333,4 +333,5 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
       });
 
     if (uploadError) {
-      console.log("Supabase Storage Upload Error:", uploadErr
+      console.log("Supabase Storage Upload Error:");
+      co
