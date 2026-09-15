@@ -11,7 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // To parse JSON payloads from the rich text editor
+app.use(express.json());
 
 app.use(express.static("public"));
 app.use(session({ secret: "hopekoncept-secret", resave: false, saveUninitialized: false }));
@@ -188,7 +188,7 @@ app.get('/admin', (req, res) => {
       <body style="font-family:Arial; background:#f1f5f9; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
         <div style="background:#fff; padding:30px; border-radius:8px; width:300px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
           <h2 style="color:#0f172a; margin-top:0;">Editorial Login</h2>
-          ${req.query.error ? '<p style="color:#b91c1c; font-size:0.85rem;">Invalid Credentials</p>' : ''}
+          ${req.query.error ? '<p style="color:#b91c1c; font-size:0.85rem;">Session Expired or Invalid Credentials</p>' : ''}
           <form action="/admin/login" method="POST">
             <input type="password" name="password" placeholder="Password" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
             <button type="submit" style="width:100%; padding:10px; background:#b91c1c; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Login</button>
@@ -207,7 +207,6 @@ app.get('/admin', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Editorial Dashboard</title>
-      <!-- Include Quill stylesheet -->
       <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
     </head>
     <body style="font-family:Arial; background:#f1f5f9; padding:20px;">
@@ -224,10 +223,8 @@ app.get('/admin', (req, res) => {
           <input type="file" name="image" accept="image/*" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; background:#f8fafc;">
           
           <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Article Body & Formatting Tools:</label>
-          <!-- Create the editor container -->
           <div id="editor" style="height: 300px; margin-bottom: 12px; background: #fff;"></div>
           
-          <!-- Hidden input to submit HTML content from Quill -->
           <input type="hidden" name="content" id="content">
           <input type="hidden" name="excerpt" id="excerpt">
 
@@ -236,7 +233,6 @@ app.get('/admin', (req, res) => {
         <p style="margin-top:20px;"><a href="/admin/logout" style="color:#b91c1c; text-decoration:none; font-size:0.9rem;">Logout</a></p>
       </div>
 
-      <!-- Include the Quill library -->
       <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
       <script>
         const quill = new Quill('#editor', {
@@ -258,7 +254,6 @@ app.get('/admin', (req, res) => {
           const textContent = quill.getText();
           
           document.getElementById('content').value = htmlContent;
-          // Automatically generate a 150-character excerpt summary from the text body
           document.getElementById('excerpt').value = textContent.slice(0, 150) + '...';
         };
       </script>
@@ -290,15 +285,17 @@ app.post('/article/:id/comment', async (req, res) => {
 });
 
 app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
-  if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
+  if (!req.session || !req.session.isAdmin) return res.status(403).send("Unauthorized");
   await supabase.from('comments').delete().eq('id', req.params.commentId);
   res.redirect(`/article/${req.params.articleId}`);
 });
 
 app.post('/admin/publish', upload.single('image'), async (req, res) => {
-  if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
-  const { title, category, excerpt, content } = req.body;
+  if (!req.session || !req.session.isAdmin) {
+    return res.redirect('/admin?error=unauthorized');
+  }
   
+  const { title, category, excerpt, content } = req.body;
   let imageUrl = null;
 
   if (req.file) {
@@ -336,3 +333,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+        
