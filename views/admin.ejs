@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hopekoncept News Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f9; color: #333; }
+        header { background: #0f172a; color: #fff; padding: 15px 20px; text-align: center; border-bottom: 3px solid #0284c7; }
+        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+        header p { margin: 5px 0 0; font-size: 0.8rem; color: #94a3b8; }
+        .nav-bar { background: #1e293b; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .nav-links { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+        .nav-links a:hover { color: #38bdf8; }
+        .filter-select { padding: 6px 12px; border-radius: 6px; background: #0f172a; color: #fff; border: 1px solid #475569; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        .card { background: #fff; padding: 15px 20px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #0284c7; }
+        .tag { font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 8px; }
+        .card h3 { margin: 0 0 8px 0; font-size: 1.1rem; color: #0f172a; }
+        .card p { margin: 0 0 10px 0; font-size: 0.9rem; color: #475569; line-height: 1.4; }
+        .time { font-size: 0.75rem; color: #94a3b8; text-align: right; }
+        footer { text-align: center; padding: 20px; font-size: 0.8rem; color: #64748b; background: #e2e8f0; margin-top: 40px; }
+        footer a { color: #0284c7; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>HOPEKONCEPT NEWS</h1>
+        <p>Your Trusted Source for Professional General News & Updates</p>
+    </header>
+
+    <div class="nav-bar">
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/?category=Local+News">Local News</a>
+            <a href="/?category=Technology">Technology</a>
+            <a href="/?category=Business">Business</a>
+        </div>
+
+        <!-- Professional Category Dropdown Filter -->
+        <form method="GET" action="/">
+            <select name="category" class="filter-select" onchange="this.form.submit()">
+                <option value="All" <%= selectedCategory === 'All' ? 'selected' : '' %>>📁 All Categories</option>
+                <option value="Local News" <%= selectedCategory === 'Local News' ? 'selected' : '' %>>Local News</option>
+                <option value="Technology" <%= selectedCategory === 'Technology' ? 'selected' : '' %>>Technology</option>
+                <option value="Business" <%= selectedCategory === 'Business' ? 'selected' : '' %>>Business</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2 style="font-size: 1.1rem; color: #334155; margin-bottom: 15px; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px;">
+            Feed: <%= selectedCategory %>
+        </h2>
+
+        <% if (articles.length === 0) { %>
+            <p style="text-align: center; color: #64748b; padding: 30px;">No articles found in this category.</p>
+        <% } %>
+
+        <% articles.forEach(article => { %>
+            <div class="card">
+                <span class="tag"><%= article.category %></span>
+                <h3><%= article.title %></h3>
+                <p><%= article.excerpt %></p>
+                <div class="time"><%= article.time %></div>
+            </div>
+        <% }) %>
+    </div>
+
+    <footer>
+        &copy; 2026 Hopekoncept News Portal. All rights reserved. <br><br>
+        <a href="/admin">&rarr; Go to Admin Publishing Panel</a>
+    </footer>
+
+</body>
+</html>
+~/news-portal/news-portal-v2 $ cat views/admin.ejs
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Publish News</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>ADMIN DASHBOARD</h1>
+        <div style="margin-top: 8px;">
+            <a href="/" style="color: #ffcc00; text-decoration: none; margin-right: 15px;">View Live Site</a> |
+            <a href="/admin/logout" style="color: #fca5a5; text-decoration: none; margin-left: 15px;">Logout</a>
+        </div>
+    </header>
+    <div class="container">
+        <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-bottom: 20px; color: #111;">Publish New Article</h3>
+            <form action="/admin/publish" method="POST">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Headline Title</label>
+                    <input type="text" name="title" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Category</label>
+                    <select name="category" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; background: #fff;">
+                        <option value="Local News">Local News</option>
+                        <option value="Politics">Politics</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Business">Business</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Sports">Sports</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Short Excerpt (Preview text)</label>
+                    <textarea name="excerpt" rows="2" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;"></textarea>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Full Article Content</label>
+                    <textarea name="content" rows="6" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;"></textarea>
+                </div>
+                <button type="submit" style="background: #0056b3; color: #fff; border: none; padding: 12px; font-size: 1rem; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600;">Publish Article Live</button>
+            </form>
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2026 Hopekoncept News Portal. All rights reserved.</p>
+    </footer>
+</body>
+</html>
