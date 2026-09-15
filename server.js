@@ -11,6 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // To parse JSON payloads from the rich text editor
 
 app.use(express.static("public"));
 app.use(session({ secret: "hopekoncept-secret", resave: false, saveUninitialized: false }));
@@ -143,6 +144,9 @@ app.get('/article/:id', async (req, res) => {
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
         .article-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .article-content h1, .article-content h2, .article-content h3 { font-family: Georgia, serif; color: #0f172a; margin-top: 20px; }
+        .article-content p { font-size: 1.1rem; line-height: 1.6; color: #334155; margin-bottom: 15px; }
+        .article-content ul, .article-content ol { margin-bottom: 15px; padding-left: 20px; color: #334155; }
         footer { text-align: center; padding: 25px; font-size: 0.8rem; color: #0f172a; margin-top: 40px; }
       </style>
     </head>
@@ -158,7 +162,7 @@ app.get('/article/:id', async (req, res) => {
           <h2 style="font-family: Georgia, serif; font-size: 1.8rem; margin: 10px 0 5px 0; color: #0f172a;">${article.title}</h2>
           <span style="font-size: 0.8rem; color: #64748b;">Published ${article.time}</span>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-          <p style="font-size: 1.1rem; line-height: 1.6; color: #334155;">${article.content || article.excerpt}</p>
+          <div class="article-content">${article.content}</div>
           
           <h3 style="margin-top: 35px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; font-size: 1.1rem;">Comments</h3>
           <div style="margin-bottom: 20px;">${commentList}</div>
@@ -197,23 +201,69 @@ app.get('/admin', (req, res) => {
   let categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join("");
 
   res.send(`
-    <!DOCTYPE html><html><head><title>Editorial Dashboard</title></head>
-    <body style="font-family:Arial; background:#f1f5f9; padding:30px;">
-      <div style="max-width:600px; margin:20px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Editorial Dashboard</title>
+      <!-- Include Quill stylesheet -->
+      <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    </head>
+    <body style="font-family:Arial; background:#f1f5f9; padding:20px;">
+      <div style="max-width:800px; margin:20px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
         <h2 style="color:#0f172a; margin-top:0;">Publish News Article</h2>
-        <form action="/admin/publish" method="POST" enctype="multipart/form-data">
+        <form id="publishForm" action="/admin/publish" method="POST" enctype="multipart/form-data">
           <input type="text" name="title" placeholder="Headline Title" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+          
           <select name="category" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
             ${categoryOptions}
           </select>
+          
           <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Upload Image from Phone:</label>
           <input type="file" name="image" accept="image/*" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; background:#f8fafc;">
-          <textarea name="excerpt" placeholder="Story summary..." required style="width:100%; padding:10px; height:120px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;"></textarea>
+          
+          <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Article Body & Formatting Tools:</label>
+          <!-- Create the editor container -->
+          <div id="editor" style="height: 300px; margin-bottom: 12px; background: #fff;"></div>
+          
+          <!-- Hidden input to submit HTML content from Quill -->
+          <input type="hidden" name="content" id="content">
+          <input type="hidden" name="excerpt" id="excerpt">
+
           <button type="submit" style="background:#b91c1c; color:#fff; border:none; padding:10px 20px; font-weight:bold; border-radius:4px; cursor:pointer;">Publish Article</button>
         </form>
         <p style="margin-top:20px;"><a href="/admin/logout" style="color:#b91c1c; text-decoration:none; font-size:0.9rem;">Logout</a></p>
       </div>
-    </body></html>
+
+      <!-- Include the Quill library -->
+      <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+      <script>
+        const quill = new Quill('#editor', {
+          theme: 'snow',
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ color: [] }, { background: [] }],
+              [{ align: [] }],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['clean']
+            ]
+          }
+        });
+
+        document.getElementById('publishForm').onsubmit = function() {
+          const htmlContent = quill.root.innerHTML;
+          const textContent = quill.getText();
+          
+          document.getElementById('content').value = htmlContent;
+          // Automatically generate a 150-character excerpt summary from the text body
+          document.getElementById('excerpt').value = textContent.slice(0, 150) + '...';
+        };
+      </script>
+    </body>
+    </html>
   `);
 });
 
@@ -247,7 +297,7 @@ app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
 
 app.post('/admin/publish', upload.single('image'), async (req, res) => {
   if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
-  const { title, category, excerpt } = req.body;
+  const { title, category, excerpt, content } = req.body;
   
   let imageUrl = null;
 
@@ -269,12 +319,12 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
     }
   }
 
-  if (title && category && excerpt) {
+  if (title && category && content) {
     await supabase.from('articles').insert([{
       title,
       category,
-      excerpt,
-      content: excerpt,
+      excerpt: excerpt || content.replace(/<[^>]*>?/gm, '').slice(0, 150) + '...',
+      content,
       image_url: imageUrl,
       time: "Just now"
     }]);
@@ -286,4 +336,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-        
