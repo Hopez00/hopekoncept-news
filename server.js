@@ -68,9 +68,9 @@ app.get('/', async (req, res) => {
         .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: -1; }
         header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .wa-channel-btn { background: #25d366; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 5px; }
-        .ticker-bar { background: #b91c1c; color: #fff; padding: 6px 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ticker-bar { background: #b91c1c; color: #fff; padding: 8px 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .ticker-bar a { color: #ffffff; text-decoration: underline; font-weight: normal; }
+        .ticker-bar a:hover { color: #f1f5f9; }
         .nav-bar { background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-bottom: 1px solid #cbd5e1; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; }
         .search-container { background: rgba(15, 23, 42, 0.85); padding: 12px 20px; display: flex; justify-content: center; }
         .search-container form { display: flex; width: 100%; max-width: 800px; gap: 8px; }
@@ -86,12 +86,14 @@ app.get('/', async (req, res) => {
       <div class="bg-overlay"></div>
       <header>
         <h1>HOPEKONCEPT NEWS</h1>
-        <div class="header-actions">
-          <a href="${WHATSAPP_CHANNEL_URL}" target="_blank" class="wa-channel-btn">&#128241; WhatsApp Channel</a>
+        <div>
           <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
         </div>
       </header>
-      <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span></div>
+      <div class="ticker-bar">
+        <span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span>
+        <span>Join our official <a href="${WHATSAPP_CHANNEL_URL}" target="_blank">WhatsApp Channel</a> for instant alerts</span>
+      </div>
       <script>
         function updateClock() {
           const now = new Date();
@@ -152,8 +154,8 @@ app.get('/article/:id', async (req, res) => {
         body { font-family: Helvetica, Arial, sans-serif; margin: 0; background-color: #f1f5f9; color: #0f172a; }
         header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .wa-channel-btn { background: #25d366; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .sub-header-bar { background: #b91c1c; color: #fff; padding: 8px 20px; font-size: 0.8rem; text-align: right; }
+        .sub-header-bar a { color: #fff; text-decoration: underline; }
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
         .article-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .article-content h1, .article-content h2, .article-content h3 { font-family: Georgia, serif; color: #0f172a; margin-top: 20px; }
@@ -167,11 +169,13 @@ app.get('/article/:id', async (req, res) => {
     <body>
       <header>
         <h1><a href="/" style="color: #ffffff; text-decoration: none;">HOPEKONCEPT NEWS</a></h1>
-        <div class="header-actions">
-          <a href="${WHATSAPP_CHANNEL_URL}" target="_blank" class="wa-channel-btn">&#128241; WhatsApp Channel</a>
+        <div>
           <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
         </div>
       </header>
+      <div class="sub-header-bar">
+        <span>Follow updates on our <a href="${WHATSAPP_CHANNEL_URL}" target="_blank">WhatsApp Channel</a></span>
+      </div>
       <div class="container">
         <div class="article-box">
           ${article.image_url ? `<img src="${article.image_url}" alt="${article.title}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 6px; margin-bottom: 15px;">` : ''}
