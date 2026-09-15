@@ -334,4 +334,35 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
 
     if (uploadError) {
       console.log("Supabase Storage Upload Error:");
-      co
+      console.log(uploadError);
+    } else {
+      const { data: publicUrlData } = supabase.storage
+        .from('news-images')
+        .getPublicUrl(fileName);
+      
+      imageUrl = publicUrlData.publicUrl;
+    }
+  }
+
+  if (title && category && content) {
+    const { error: insertError } = await supabase.from('articles').insert([{
+      title,
+      category,
+      excerpt: excerpt || content.replace(/<[^>]*>?/gm, '').slice(0, 150) + '...',
+      content,
+      image_url: imageUrl,
+      time: "Just now"
+    }]);
+
+    if (insertError) {
+      console.log("Supabase Insert Error:");
+      console.log(insertError);
+    }
+  }
+  res.redirect('/admin');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
