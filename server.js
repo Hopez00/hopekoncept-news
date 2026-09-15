@@ -7,19 +7,13 @@ const supabaseKey = "sb_publishable_YmKYpwDjkN5iaTqE5PzXXw_I5cwLixQ";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
-
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
 app.use(session({ secret: "hopekoncept-secret", resave: false, saveUninitialized: false }));
 
 const ADMIN_PASS = "hope2026";
-let articles = [
-    { id: 1, title: "Major Infrastructure Project Commissioned to Boost Regional Transit", excerpt: "New transport and road expansion initiatives kick off to streamline commuter movement across urban hubs...", category: "Local News", time: "1 hour ago", comments: [{ id: 1, name: "Collins", text: "This is a much-needed development for commuters!" }] },
-    { id: 2, title: "Tech Ecosystem Sees Surge in Mobile Development Solutions", excerpt: "Developers across regions leverage lightweight mobile environments for rapid web and app deployment...", category: "Technology", time: "3 hours ago", comments: [] }
-];
-
-let commentIdCounter = 2;
-const categories = ["Education", "Local News", "Technology", "Science", "Sports", "Politics", "Entertainment", "Guinness World Record"];
+const categories = ["Education", "Local News", "Technology", "Science", "Sports", "Politics", "Entertainment"];
 
 app.get('/', async (req, res) => {
   const category = req.query.category || "All";
@@ -40,6 +34,7 @@ app.get('/', async (req, res) => {
 
   let htmlCards = filtered.map(a => `
     <article style="border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 16px;">
+      ${a.image_url ? `<img src="${a.image_url}" alt="${a.title}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">` : ''}
       <span style="font-size: 0.7rem; background: #b91c1c; color: #fff; padding: 2px 8px; border-radius: 3px; font-weight: bold; text-transform: uppercase;">${a.category}</span>
       <h3 style="margin: 8px 0 6px 0; font-size: 1.15rem; color: #0f172a; font-family: Georgia, serif;"><a href="/article/${a.id}" style="color: #0f172a; text-decoration: none;">${a.title}</a></h3>
       <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: #475569; line-height: 1.4;">${a.excerpt}</p>
@@ -53,72 +48,65 @@ app.get('/', async (req, res) => {
   let navLinks = '<a href="/" style="color: #334155; text-decoration: none; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: ' + (category === 'All' ? '#e2e8f0' : 'transparent') + ';">All</a>' + categories.map(c => `
     <a href="/?category=${encodeURIComponent(c)}" style="color: #334155; text-decoration: none; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: ${category === c ? '#e2e8f0' : 'transparent'};">${c}</a>
   `).join("");
-  
-  // (The rest of your response HTML follows here)
 
-
-
-    res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hopekoncept News - Global & Local Feed</title>
-    <style>
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Hopekoncept News - Global & Local Feed</title>
+      <style>
         body { font-family: Helvetica, Arial, sans-serif; margin: 0; background-color: #f1f5f9; color: #0f172a; position: relative; min-height: 100vh; }
         .bg-video-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -2; }
         .bg-video-container video { width: 100%; height: 100%; object-fit: cover; }
         .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: -1; }
-        header { background-color: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
-        .ticker-bar { background-color: #b91c1c; color: #fff; padding: 6px 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
-        .nav-bar { background-color: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-bottom: 1px solid #cbd5e1; display: flex; gap: 15px; overflow-x: auto; position: relative; z-index: 1; backdrop-filter: blur(5px); }
-        .nav-bar a { color: #334155; text-decoration: none; font-size: 0.85rem; font-weight: bold; white-space: nowrap; }
-        .nav-bar a:hover { color: #b91c1c; }
-        .search-container { background: rgba(15, 23, 42, 0.85); padding: 12px 20px; display: flex; justify-content: center; position: relative; z-index: 1; }
+        .ticker-bar { background: #b91c1c; color: #fff; padding: 6px 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-bar { background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-bottom: 1px solid #cbd5e1; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; }
+        .search-container { background: rgba(15, 23, 42, 0.85); padding: 12px 20px; display: flex; justify-content: center; }
         .search-container form { display: flex; width: 100%; max-width: 800px; gap: 8px; }
-        .search-container input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 3px; font-size: 0.9rem; }
-        .search-container button { background: #b91c1c; color: #fff; border: none; padding: 8px 16px; font-weight: bold; border-radius: 3px; cursor: pointer; }
+        .search-container input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; }
+        .search-container button { background: #b91c1c; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; position: relative; z-index: 1; }
-        .main-feed { background: rgba(255, 255, 255, 0.92); padding: 20px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); backdrop-filter: blur(5px); }
-        footer { text-align: center; padding: 25px; font-size: 0.8rem; background: #0f172a; color: #cbd5e1; margin-top: 40px; position: relative; z-index: 1; }
-    </style>
-</head>
-<body>
-    <div class="bg-video-container"><video autoplay muted loop playsinline><source src="https://assets.mixkit.co/videos/preview/mixkit-woman-reading-a-magazine-in-a-cozy-room-41617-large.mp4" type="video/mp4"></video></div>
-    <div class="bg-overlay"></div>
-    <header>
+        .main-feed { background: rgba(255, 255, 255, 0.93); padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        footer { text-align: center; padding: 25px; font-size: 0.8rem; color: #ffffff; margin-top: 40px; position: relative; z-index: 1; }
+      </style>
+    </head>
+    <body>
+      <div class="bg-video-container"><video autoplay muted loop playsinline><source src="https://assets.mixkit.co/videos/preview/mixkit-hands-typing-on-a-laptop-keyboard-42863-large.mp4" type="video/mp4"></video></div>
+      <div class="bg-overlay"></div>
+      <header>
         <h1>HOPEKONCEPT NEWS</h1>
-        <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 4px 10px; border-radius: 3px;">Admin Panel</a>
-    </header>
-   <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span></div>
-<script>
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('live-clock').innerText = now.toLocaleTimeString();
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
-</script>
-
-    <div class="search-container">
+        <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
+      </header>
+      <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span></div>
+      <script>
+        function updateClock() {
+          const now = new Date();
+          document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+      </script>
+      <div class="search-container">
         <form action="/" method="GET">
-            <input type="text" name="search" placeholder="Search news headlines or topics..." value="${search}">
-            <button type="submit">Search</button>
+          <input type="text" name="search" placeholder="Search news headlines or topics..." value="${search}">
+          <button type="submit">Search</button>
         </form>
-    </div>
-    <div class="nav-bar">${navLinks}</div>
-    <div class="container">
+      </div>
+      <div class="nav-bar">${navLinks}</div>
+      <div class="container">
         <div class="main-feed">
-            <h2 style="font-size: 1rem; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-top: 0;">Category: ${category}</h2>
-            ${filtered.length === 0 ? '<p style="color: #64748b; text-align: center; padding: 30px;">No matching stories found.</p>' : htmlCards}
+          <h2 style="font-size: 1.1rem; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-top: 0;">${category} Feed</h2>
+          ${filtered.length === 0 ? '<p style="color: #64748b; text-align: center; padding: 30px;">No matching stories found.</p>' : htmlCards}
         </div>
-    </div>
-    <footer>&copy; 2026 Hopekoncept News Service. All rights reserved.</footer>
-</body>
-</html>
-    `);
+      </div>
+      <footer>&copy; 2026 Hopekoncept News Service. All rights reserved.</footer>
+    </body>
+    </html>
+  `);
 });
 
 app.get('/article/:id', async (req, res) => {
@@ -132,7 +120,6 @@ app.get('/article/:id', async (req, res) => {
   const dbComments = comments || [];
 
   let commentList = dbComments.length > 0 ? dbComments.map(c => `
-  
     <div style="background: #f8fafc; border-left: 3px solid #b91c1c; padding: 10px 15px; margin-bottom: 10px; border-radius: 4px;">
       <strong style="font-size: 0.85rem; color: #0f172a;">${c.name}</strong>
       <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #334155;">${c.text}</p>
@@ -163,6 +150,7 @@ app.get('/article/:id', async (req, res) => {
       </header>
       <div class="container">
         <div class="article-box">
+          ${article.image_url ? `<img src="${article.image_url}" alt="${article.title}" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 6px; margin-bottom: 15px;">` : ''}
           <span style="font-size: 0.75rem; background: #b91c1c; color: #fff; padding: 3px 10px; border-radius: 3px; font-weight: bold; text-transform: uppercase;">${article.category}</span>
           <h2 style="font-family: Georgia, serif; font-size: 1.8rem; margin: 10px 0 5px 0; color: #0f172a;">${article.title}</h2>
           <span style="font-size: 0.8rem; color: #64748b;">Published ${article.time}</span>
@@ -185,6 +173,59 @@ app.get('/article/:id', async (req, res) => {
     </html>
   `);
 });
+
+app.get('/admin', (req, res) => {
+  if (!req.session.isAdmin) {
+    return res.send(`
+      <!DOCTYPE html><html><head><title>Admin Login</title></head>
+      <body style="font-family:Arial; background:#f1f5f9; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
+        <div style="background:#fff; padding:30px; border-radius:8px; width:300px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+          <h2 style="color:#0f172a; margin-top:0;">Editorial Login</h2>
+          ${req.query.error ? '<p style="color:#b91c1c; font-size:0.85rem;">Invalid Credentials</p>' : ''}
+          <form action="/admin/login" method="POST">
+            <input type="password" name="password" placeholder="Password" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+            <button type="submit" style="width:100%; padding:10px; background:#b91c1c; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Login</button>
+          </form>
+        </div>
+      </body></html>
+    `);
+  }
+
+  let categoryOptions = categories.map(c => `<option value="${c}">${c}</option>`).join("");
+
+  res.send(`
+    <!DOCTYPE html><html><head><title>Editorial Dashboard</title></head>
+    <body style="font-family:Arial; background:#f1f5f9; padding:30px;">
+      <div style="max-width:600px; margin:20px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+        <h2 style="color:#0f172a; margin-top:0;">Publish News Article</h2>
+        <form action="/admin/publish" method="POST">
+          <input type="text" name="title" placeholder="Headline Title" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+          <select name="category" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+            ${categoryOptions}
+          </select>
+          <input type="url" name="image_url" placeholder="Image URL (optional)" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+          <textarea name="excerpt" placeholder="Story summary..." required style="width:100%; padding:10px; height:120px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;"></textarea>
+          <button type="submit" style="background:#b91c1c; color:#fff; border:none; padding:10px 20px; font-weight:bold; border-radius:4px; cursor:pointer;">Publish Article</button>
+        </form>
+        <p style="margin-top:20px;"><a href="/admin/logout" style="color:#b91c1c; text-decoration:none; font-size:0.9rem;">Logout</a></p>
+      </div>
+    </body></html>
+  `);
+});
+
+app.post('/admin/login', (req, res) => {
+  if (req.body.password === ADMIN_PASS) {
+    req.session.isAdmin = true;
+    res.redirect('/admin');
+  } else {
+    res.redirect('/admin?error=true');
+  }
+});
+
+app.get('/admin/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/admin'));
+});
+
 app.post('/article/:id/comment', async (req, res) => {
   const articleId = req.params.id;
   const { name, text } = req.body;
@@ -202,35 +243,22 @@ app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
 
 app.post('/admin/publish', async (req, res) => {
   if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
-  const { title, category, excerpt } = req.body;
+  const { title, category, excerpt, image_url } = req.body;
   if (title && category && excerpt) {
     await supabase.from('articles').insert([{
       title,
       category,
       excerpt,
       content: excerpt,
+      image_url: image_url || null,
       time: "Just now"
     }]);
   }
   res.redirect('/admin');
 });
 
-
-app.post("/admin/login", (req, res) => {
-    if (req.body.password === ADMIN_PASS) { req.session.isAdmin = true; res.redirect("/admin"); }
-    else { res.redirect("/admin?error=true"); }
-});
-
-app.get("/admin/logout", (req, res) => { req.session.destroy(() => res.redirect("/admin")); });
-
-app.post("/admin/publish", (req, res) => {
-    if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
-    const { title, category, excerpt } = req.body;
-    articles.unshift({ id: articles.length + 1, title, category, excerpt, time: "Just now", comments: [] });
-    res.redirect("/");
-});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
-                          
+            
