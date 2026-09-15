@@ -307,7 +307,9 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
         upsert: false
       });
 
-    if (!uploadError) {
+    if (uploadError) {
+      console.log("Supabase Storage Upload Error:", uploadError);
+    } else {
       const { data: publicUrlData } = supabase.storage
         .from('news-images')
         .getPublicUrl(fileName);
@@ -337,4 +339,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-            
