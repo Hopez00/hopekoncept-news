@@ -317,7 +317,7 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
   }
 
   if (title && category && content) {
-    await supabase.from('articles').insert([{
+    const { error: insertError } = await supabase.from('articles').insert([{
       title,
       category,
       excerpt: excerpt || content.replace(/<[^>]*>?/gm, '').slice(0, 150) + '...',
@@ -325,6 +325,10 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
       image_url: imageUrl,
       time: "Just now"
     }]);
+
+    if (insertError) {
+      console.log("Supabase Insert Error:", insertError);
+    }
   }
   res.redirect('/admin');
 });
@@ -333,4 +337,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-        
+            
