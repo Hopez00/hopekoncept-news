@@ -1,6 +1,9 @@
 const express = require("express");
 const session = require("express-session");
+const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const supabaseUrl = "https://lapfeiybncftrdsoynxw.supabase.co";
 const supabaseKey = "sb_publishable_YmKYpwDjkN5iaTqE5PzXXw_I5cwLixQ";
@@ -198,12 +201,13 @@ app.get('/admin', (req, res) => {
     <body style="font-family:Arial; background:#f1f5f9; padding:30px;">
       <div style="max-width:600px; margin:20px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
         <h2 style="color:#0f172a; margin-top:0;">Publish News Article</h2>
-        <form action="/admin/publish" method="POST">
+        <form action="/admin/publish" method="POST" enctype="multipart/form-data">
           <input type="text" name="title" placeholder="Headline Title" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
           <select name="category" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
             ${categoryOptions}
           </select>
-          <input type="url" name="image_url" placeholder="Image URL (optional)" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
+          <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Upload Image from Phone:</label>
+          <input type="file" name="image" accept="image/*" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; background:#f8fafc;">
           <textarea name="excerpt" placeholder="Story summary..." required style="width:100%; padding:10px; height:120px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;"></textarea>
           <button type="submit" style="background:#b91c1c; color:#fff; border:none; padding:10px 20px; font-weight:bold; border-radius:4px; cursor:pointer;">Publish Article</button>
         </form>
@@ -241,16 +245,37 @@ app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
   res.redirect(`/article/${req.params.articleId}`);
 });
 
-app.post('/admin/publish', async (req, res) => {
+app.post('/admin/publish', upload.single('image'), async (req, res) => {
   if (!req.session.isAdmin) return res.status(403).send("Unauthorized");
-  const { title, category, excerpt, image_url } = req.body;
+  const { title, category, excerpt } = req.body;
+  
+  let imageUrl = null;
+
+  if (req.file) {
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('news-images')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (!uploadError) {
+      const { data: publicUrlData } = supabase.storage
+        .from('news-images')
+        .getPublicUrl(fileName);
+      
+      imageUrl = publicUrlData.publicUrl;
+    }
+  }
+
   if (title && category && excerpt) {
     await supabase.from('articles').insert([{
       title,
       category,
       excerpt,
       content: excerpt,
-      image_url: image_url || null,
+      image_url: imageUrl,
       time: "Just now"
     }]);
   }
@@ -261,4 +286,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-            
+        
