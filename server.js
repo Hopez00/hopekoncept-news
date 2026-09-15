@@ -98,7 +98,8 @@ app.get('/', async (req, res) => {
             <span style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-top: 2px;">Global & Local Intelligence</span>
           </div>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <a href="/advertise" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Advertise</a>
           <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
         </div>
       </header>
@@ -127,6 +128,66 @@ app.get('/', async (req, res) => {
           ${filtered.length === 0 ? '<p style="color: #64748b; text-align: center; padding: 30px;">No matching stories found.</p>' : htmlCards}
         </div>
       </div>
+      <footer>&copy; 2026 Hopekoncept News Service. All rights reserved.</footer>
+    </body>
+    </html>
+  `);
+});
+
+app.get('/advertise', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Advertise With Us - Hopekoncept News</title>
+      <style>
+        body { font-family: Helvetica, Arial, sans-serif; margin: 0; background-color: #f1f5f9; color: #0f172a; }
+        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 15px; }
+        .card { background: #ffffff; padding: 35px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { font-family: Georgia, serif; color: #0f172a; margin-top: 0; }
+        h3 { color: #b91c1c; margin-top: 25px; }
+        p, li { font-size: 1rem; line-height: 1.6; color: #334155; }
+        ul { padding-left: 20px; }
+        .cta-box { background: #f8fafc; border-left: 4px solid #b91c1c; padding: 20px; margin-top: 30px; border-radius: 4px; }
+        .cta-box a { color: #b91c1c; font-weight: bold; text-decoration: none; }
+        footer { text-align: center; padding: 25px; font-size: 0.8rem; color: #64748b; margin-top: 40px; }
+      </style>
+    </head>
+    <body>
+      <header>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <a href="/" style="color: #ffffff; text-decoration: none; font-weight: bold; font-size: 1.2rem;">HOPEKONCEPT NEWS</a>
+        </div>
+        <div>
+          <a href="/" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none;">&larr; Back to Home</a>
+        </div>
+      </header>
+
+      <div class="container">
+        <div class="card">
+          <h1>Advertise & Partner With Us</h1>
+          <p><strong>HOPEKONCEPT NEWS</strong> is a growing digital platform providing fast, reliable updates, campus intelligence, and local news. Partnering with us puts your brand, business, or event directly in front of an active and engaged local audience.</p>
+
+          <h3>Advertising Opportunities</h3>
+          <ul>
+            <li><strong>Sponsored Articles & Press Releases:</strong> Dedicated feature stories written about your brand, business launch, or upcoming campus event.</li>
+            <li><strong>WhatsApp Channel Promotions:</strong> Broadcast your flyers, promos, and announcements directly to our active WhatsApp channel subscribers.</li>
+            <li><strong>Banner & Feed Placements:</strong> Highlight your visual ads directly on our high-traffic news feeds.</li>
+          </ul>
+
+          <div class="cta-box">
+            <h4 style="margin: 0 0 8px 0; color: #0f172a;">Ready to Grow Your Brand?</h4>
+            <p style="margin: 0;">Get in touch with our editorial team today to discuss rates and customized promotion packages:</p>
+            <p style="margin: 10px 0 0 0;">
+              💬 WhatsApp Channel: <a href="${WHATSAPP_CHANNEL_URL}" target="_blank">Connect Here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <footer>&copy; 2026 Hopekoncept News Service. All rights reserved.</footer>
     </body>
     </html>
@@ -264,7 +325,10 @@ app.get('/admin', (req, res) => {
     </head>
     <body style="font-family:Arial; background:#f1f5f9; padding:20px;">
       <div style="max-width:800px; margin:20px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-        <h2 style="color:#0f172a; margin-top:0;">Publish News Article</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="color:#0f172a; margin:0;">Publish News Article</h2>
+          <a href="/" style="color: #64748b; font-size: 0.9rem; text-decoration: none;">&larr; Back to Site</a>
+        </div>
         <form id="publishForm" action="/admin/publish" method="POST" enctype="multipart/form-data">
           <input type="text" name="title" placeholder="Headline Title" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;">
           
@@ -296,7 +360,7 @@ app.get('/admin', (req, res) => {
               ['bold', 'italic', 'underline', 'strike'],
               [{ color: [] }, { background: [] }],
               [{ align: [] }],
-               [{ list: 'ordered' }, { list: 'bullet' }],
+              [{ list: 'ordered' }, { list: 'bullet' }],
               ['clean']
             ]
           }
@@ -361,8 +425,7 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
       });
 
     if (uploadError) {
-      console.log("Supabase Storage Upload Error:");
-      console.log(uploadError);
+      console.log("Supabase Storage Upload Error:", uploadError);
     } else {
       const { data: publicUrlData } = supabase.storage
         .from('news-images')
@@ -383,8 +446,7 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
     }]);
 
     if (insertError) {
-      console.log("Supabase Insert Error:");
-      console.log(insertError);
+      console.log("Supabase Insert Error:", insertError);
     }
   }
   res.redirect('/admin');
