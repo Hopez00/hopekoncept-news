@@ -14,7 +14,7 @@ let articles = [
 ];
 
 let commentIdCounter = 2;
-const categories = ["Local News", "Technology", "Science", "Sports", "Politics", "Entertainment", "Guinness World Record"];
+const categories = ["Education", "Local News", "Technology", "Science", "Sports", "Politics", "Entertainment", "Guinness World Record"];
 
 app.get("/", (req, res) => {
     const category = req.query.category || "All";
