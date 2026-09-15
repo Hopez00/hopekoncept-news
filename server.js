@@ -71,7 +71,16 @@ app.get("/", (req, res) => {
         <h1>HOPEKONCEPT NEWS</h1>
         <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 4px 10px; border-radius: 3px;">Admin Panel</a>
     </header>
-    <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates</span></div>
+   <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span></div>
+<script>
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+</script>
+
     <div class="search-container">
         <form action="/" method="GET">
             <input type="text" name="search" placeholder="Search news headlines or topics..." value="${search}">
