@@ -1,6 +1,8 @@
 const express = require("express");
 const session = require("express-session");
 const app = express();
+app.use(express.urlencoded({ extended: true }));
+
 
 app.use(express.static("public"));
 app.use(session({ secret: "hopekoncept-secret", resave: false, saveUninitialized: false }));
