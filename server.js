@@ -18,6 +18,7 @@ app.use(session({ secret: "hopekoncept-secret", resave: false, saveUninitialized
 
 const ADMIN_PASS = "hope2026";
 const categories = ["Education", "Local News", "Technology", "Science", "Sports", "Politics", "Entertainment"];
+const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb8TtRa42DccjoDS6x29";
 
 app.get('/', async (req, res) => {
   const category = req.query.category || "All";
@@ -65,8 +66,10 @@ app.get('/', async (req, res) => {
         .bg-video-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -2; }
         .bg-video-container video { width: 100%; height: 100%; object-fit: cover; }
         .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: -1; }
-        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .wa-channel-btn { background: #25d366; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 5px; }
         .ticker-bar { background: #b91c1c; color: #fff; padding: 6px 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .nav-bar { background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-bottom: 1px solid #cbd5e1; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; }
         .search-container { background: rgba(15, 23, 42, 0.85); padding: 12px 20px; display: flex; justify-content: center; }
@@ -83,7 +86,10 @@ app.get('/', async (req, res) => {
       <div class="bg-overlay"></div>
       <header>
         <h1>HOPEKONCEPT NEWS</h1>
-        <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
+        <div class="header-actions">
+          <a href="${WHATSAPP_CHANNEL_URL}" target="_blank" class="wa-channel-btn">&#128241; WhatsApp Channel</a>
+          <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
+        </div>
       </header>
       <div class="ticker-bar"><span>Breaking News Feed &bull; Live Updates &bull; <span id="live-clock"></span></span></div>
       <script>
@@ -123,6 +129,10 @@ app.get('/article/:id', async (req, res) => {
   const { data: comments } = await supabase.from('comments').select('*').eq('article_id', articleId).order('id', { ascending: false });
   const dbComments = comments || [];
 
+  const articleUrl = `https://${req.get('host')}/article/${article.id}`;
+  const encodedTitle = encodeURIComponent(article.title);
+  const encodedUrl = encodeURIComponent(articleUrl);
+
   let commentList = dbComments.length > 0 ? dbComments.map(c => `
     <div style="background: #f8fafc; border-left: 3px solid #b91c1c; padding: 10px 15px; margin-bottom: 10px; border-radius: 4px;">
       <strong style="font-size: 0.85rem; color: #0f172a;">${c.name}</strong>
@@ -140,20 +150,27 @@ app.get('/article/:id', async (req, res) => {
       <title>${article.title} - Hopekoncept News</title>
       <style>
         body { font-family: Helvetica, Arial, sans-serif; margin: 0; background-color: #f1f5f9; color: #0f172a; }
-        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        header { background: #000000; border-bottom: 4px solid #b91c1c; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         header h1 { margin: 0; color: #ffffff; font-size: 1.4rem; font-family: Georgia, serif; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .wa-channel-btn { background: #25d366; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 5px; }
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
         .article-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .article-content h1, .article-content h2, .article-content h3 { font-family: Georgia, serif; color: #0f172a; margin-top: 20px; }
         .article-content p { font-size: 1.1rem; line-height: 1.6; color: #334155; margin-bottom: 15px; }
         .article-content ul, .article-content ol { margin-bottom: 15px; padding-left: 20px; color: #334155; }
+        .share-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin: 25px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .share-btn { padding: 6px 12px; border-radius: 4px; color: #fff; font-size: 0.8rem; font-weight: bold; text-decoration: none; display: inline-block; }
         footer { text-align: center; padding: 25px; font-size: 0.8rem; color: #0f172a; margin-top: 40px; }
       </style>
     </head>
     <body>
       <header>
         <h1><a href="/" style="color: #ffffff; text-decoration: none;">HOPEKONCEPT NEWS</a></h1>
-        <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
+        <div class="header-actions">
+          <a href="${WHATSAPP_CHANNEL_URL}" target="_blank" class="wa-channel-btn">&#128241; WhatsApp Channel</a>
+          <a href="/admin" style="color: #cbd5e1; font-size: 0.8rem; text-decoration: none; border: 1px solid #475569; padding: 6px 12px; border-radius: 4px;">Admin Panel</a>
+        </div>
       </header>
       <div class="container">
         <div class="article-box">
@@ -163,6 +180,14 @@ app.get('/article/:id', async (req, res) => {
           <span style="font-size: 0.8rem; color: #64748b;">Published ${article.time}</span>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
           <div class="article-content">${article.content}</div>
+
+          <!-- Social Share Buttons -->
+          <div class="share-box">
+            <span style="font-size: 0.85rem; font-weight: bold; color: #0f172a;">Share this story:</span>
+            <a href="https://api.whatsapp.com/send?text=${encodedTitle}%20-%20${encodedUrl}" target="_blank" class="share-btn" style="background: #25d366;">WhatsApp</a>
+            <a href="https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}" target="_blank" class="share-btn" style="background: #000000;">X (Twitter)</a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}" target="_blank" class="share-btn" style="background: #1877f2;">Facebook</a>
+          </div>
           
           <h3 style="margin-top: 35px; border-bottom: 2px solid #0f172a; padding-bottom: 6px; font-size: 1.1rem;">Comments</h3>
           <div style="margin-bottom: 20px;">${commentList}</div>
@@ -308,34 +333,4 @@ app.post('/admin/publish', upload.single('image'), async (req, res) => {
       });
 
     if (uploadError) {
-      console.log("Supabase Storage Upload Error:", uploadError);
-    } else {
-      const { data: publicUrlData } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(fileName);
-      
-      imageUrl = publicUrlData.publicUrl;
-    }
-  }
-
-  if (title && category && content) {
-    const { error: insertError } = await supabase.from('articles').insert([{
-      title,
-      category,
-      excerpt: excerpt || content.replace(/<[^>]*>?/gm, '').slice(0, 150) + '...',
-      content,
-      image_url: imageUrl,
-      time: "Just now"
-    }]);
-
-    if (insertError) {
-      console.log("Supabase Insert Error:", insertError);
-    }
-  }
-  res.redirect('/admin');
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+      console.log("Supabase Storage Upload Error:", uploadErr
