@@ -44,20 +44,22 @@ app.get('/', async (req, res) => {
         return true;
     });
 
-    const htmlCards = filtered.map(a => `
-        <article style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
-            <img src="${a.image_url}" alt="${a.title}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">
-            <span style="font-size: 0.7rem; background: #f0f2f5; color: #0f172a; padding: 2px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${a.category}</span>
-            <h2 style="margin: 8px 0 4px 0; font-size: 1.15rem; color: #0f172a; font-family: Georgia, serif;"><a href="/article/${a.id}" style="color: #0f172a; text-decoration: none;">${a.title}</a></h2>
-            <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: #334155; line-height: 1.4;">${a.excerpt}</p>
-            <span style="font-size: 0.75rem; color: #64748b;">Published ${a.time}</span>
-            <div style="margin-top: 8px;"><a href="/article/${a.id}" style="color: #0f6fcf; font-weight: bold; text-decoration: none;">Read More &rarr;</a></div>
-        </article>
-    `).join('');
+    let htmlCards = '';
+    for (const a of filtered) {
+        htmlCards += '<article style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">' +
+            '<img src="' + a.image_url + '" alt="' + a.title + '" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">' +
+            '<span style="font-size: 0.7rem; background: #f0f2f5; color: #0f172a; padding: 2px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">' + a.category + '</span>' +
+            '<h2 style="margin: 8px 0 4px 0; font-size: 1.15rem; color: #0f172a; font-family: Georgia, serif;"><a href="/article/' + a.id + '" style="color: #0f172a; text-decoration: none;">' + a.title + '</a></h2>' +
+            '<p style="margin: 0 0 8px 0; font-size: 0.9rem; color: #334155; line-height: 1.4;">' + a.excerpt + '</p>' +
+            '<span style="font-size: 0.75rem; color: #64748b;">Published ' + a.time + '</span>' +
+            '<div style="margin-top: 8px;"><a href="/article/' + a.id + '" style="color: #0f6fcf; font-weight: bold; text-decoration: none;">Read More &rarr;</a></div>' +
+            '</article>';
+    }
 
-    const navLinks = ['All', ...categories].map(c => `
-        <a href="/?category=${encodeURIComponent(c)}" style="color: #334155; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-decoration: none; ${category === c ? 'background: #0f6fcf; color: #fff;' : ''}">${c}</a>
-    `).join('');
+    let navLinks = '<a href="/?category=All" style="color: #334155; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-decoration: none; ' + (category === 'All' ? 'background: #0f6fcf; color: #fff;' : '') + '">All</a>';
+    for (const c of categories) {
+        navLinks += ' <a href="/?category=' + encodeURIComponent(c) + '" style="color: #334155; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-decoration: none; ' + (category === c ? 'background: #0f6fcf; color: #fff;' : '') + '">' + c + '</a>';
+    }
 
     res.send(`
         <!DOCTYPE html>
@@ -315,8 +317,8 @@ app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
 
     if (req.files && req.files.length > 0) {
         for (const file of req.files) {
-            const fileName = `${Date.now()}-${file.originalname}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const fileName = Date.now() + '-' + file.originalname;
+            const { error: uploadError } = await supabase.storage
                 .from('news-images')
                 .upload(fileName, file.buffer, {
                     contentType: file.mimetype,
@@ -324,7 +326,31 @@ app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
                 });
 
             if (uploadError) {
-                console.log("Supabase Insert Error:", insertError);
+                console.log("Supabase Storage Upload Error:", uploadError);
+            } else {
+                const { data: publicUrlData } = supabase.storage
+                    .from('news-images')
+                    .getPublicUrl(fileName);
+
+                mediaUrls.push(publicUrlData.publicUrl);
+            }
+        }
+    }
+
+    if (title && category && content) {
+        const { error: insertError } = await supabase.from('articles').insert([
+            {
+                title,
+                category,
+                excerpt: excerpt || content.replace(/(<([^>]+)>)/gi, '').slice(0, 150) + '...',
+                content,
+                image_url: mediaUrls.join(','),
+                time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            }
+        ]);
+
+        if (insertError) {
+            console.log("Supabase Insert Error:", insertError);
         }
     }
 
@@ -333,5 +359,5 @@ app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log("Server is running on port " + PORT);
 });
