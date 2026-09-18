@@ -61,6 +61,7 @@ app.get('/', async (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta name="monetag" content="bcc8a66d8f9be3076900eb18f6e13e49">
+      <script src="https://quge5.com/88/tag.min.js" data-zone="282479" async data-cfasync="false"></script>
       <title>Hopekoncept News - Global & Local Feed</title>
       <style>
         body { font-family: Helvetica, Arial, sans-serif; margin: 0; background-color: #f1f5f9; color: #0f172a; position: relative; min-height: 100vh; }
