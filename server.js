@@ -338,8 +338,7 @@ app.get('/admin', (req, res) => {
             ${categoryOptions}
           </select>
           
-          <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Upload Image from Phone:</label>
-          <input type="file" name="image" accept="image/*" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; background:#f8fafc;">
+          <input type="file" name="media" id="media" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx" style="...">
           
           <label style="font-size:0.85rem; color:#475569; display:block; margin-bottom:4px;">Article Body & Formatting Tools:</label>
           <div id="editor" style="height: 300px; margin-bottom: 12px; background: #fff;"></div>
@@ -409,32 +408,37 @@ app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
   res.redirect(`/article/${req.params.articleId}`);
 });
 
-app.post('/admin/publish', upload.single('image'), async (req, res) => {
+app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
+  
   if (!req.session || !req.session.isAdmin) {
     return res.redirect('/admin?error=unauthorized');
   }
   
-  const { title, category, excerpt, content } = req.body;
-  let imageUrl = null;
+    const { title, category, excerpt, content } = req.body;
+    let mediaUrls = [];
 
-  if (req.file) {
-    const fileName = `${Date.now()}-${req.file.originalname}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('news-images')
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false
-      });
+    if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+            const fileName = `${Date.now()}-${file.originalname}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('news-images')
+                .upload(fileName, file.buffer, {
+                    contentType: file.mimetype,
+                    upsert: false
+                });
 
-    if (uploadError) {
-      console.log("Supabase Storage Upload Error:", uploadError);
-    } else {
-      const { data: publicUrlData } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(fileName);
-      
-      imageUrl = publicUrlData.publicUrl;
-    }
+            if (uploadError) {
+                console.log("Supabase Storage Upload Error:", uploadError);
+            } else {
+                const { data: publicUrlData } = supabase.storage
+                    .from('news-images')
+                    .getPublicUrl(fileName);
+
+                mediaUrls.push(publicUrlData.publicUrl);
+            }
+        }
+                        }
+                  
   }
 
   if (title && category && content) {
