@@ -409,11 +409,10 @@ app.post('/article/:articleId/comment/:commentId/delete', async (req, res) => {
 });
 
 app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
-  
-  if (!req.session || !req.session.isAdmin) {
-    return res.redirect('/admin?error=unauthorized');
-  }
-  
+    if (!req.session || !req.session.isAdmin) {
+        return res.redirect('/admin?error=unauthorized');
+    }
+
     const { title, category, excerpt, content } = req.body;
     let mediaUrls = [];
 
@@ -437,22 +436,45 @@ app.post('/admin/publish', upload.array('media', 10), async (req, res) => {
                 mediaUrls.push(publicUrlData.publicUrl);
             }
         }
-                        }
+}
+    if (title && category && content) {
+        const { error: insertError } = await supabase.from('articles').insert([
+            {
+                title,
+                category,
+                excerpt: excerpt || content.replace(/(<([^>]+)>)/gi, '').slice(0, 150) + '...',
+                content,
+                image_url: mediaUrls.join(','),
+                time: 'Just now'
+            }
+        ]);
+
+        if (insertError) {
+            console.log("Supabase Insert Error:", insertError);
+        }
+
+        res.redirect('/admin');
+    }
+});
                   
-  }
+        const { error: insertError } = await supabase.from('articles').insert([
+            {
+                title,
+                category,
+                excerpt: excerpt || content.replace(/(<([^>]+)>)/gi, '').slice(0, 150) + '...',
+                content,
+                image_url: mediaUrls.join(','),
+                time: 'Just now'
+            }
+        ]);
 
-  if (title && category && content) {
-    const { error: insertError } = await supabase.from('articles').insert([{
-      title,
-      category,
-      excerpt: excerpt || content.replace(/<[^>]*>?/gm, '').slice(0, 150) + '...',
-      content,
-      image_url: imageUrl,
-      time: "Just now"
-    }]);
+        if (insertError) {
+            console.log("Supabase Insert Error:", insertError);
+        }
 
-    if (insertError) {
-      console.log("Supabase Insert Error:", insertError);
+        res.redirect('/admin');
+      }
+                        
     }
   }
   res.redirect('/admin');
